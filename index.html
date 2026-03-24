@@ -29,69 +29,6 @@
             color: #fff;
         }
         
-        /* Login Screen */
-        .login-screen {
-            text-align: center;
-            padding: 40px;
-        }
-        
-        .login-screen h1 {
-            font-size: 2rem;
-            color: var(--pink);
-            margin-bottom: 10px;
-            text-shadow: 0 0 20px var(--pink);
-        }
-        
-        .login-screen p {
-            color: rgba(255,255,255,0.5);
-            margin-bottom: 30px;
-            font-size: 0.9rem;
-        }
-        
-        .login-form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            max-width: 300px;
-            margin: 0 auto;
-        }
-        
-        .login-form input {
-            padding: 12px 16px;
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            border-radius: 8px;
-            color: #fff;
-            font-family: inherit;
-            font-size: 0.9rem;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-        
-        .login-form input:focus {
-            border-color: var(--cyan);
-        }
-        
-        .login-form input[type="submit"] {
-            background: linear-gradient(135deg, var(--pink), var(--purple));
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        
-        .login-form input[type="submit"]:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(255,107,157,0.4);
-        }
-        
-        .login-error {
-            color: #ff4444;
-            font-size: 0.8rem;
-            margin-top: 10px;
-            display: none;
-        }
-        
         /* CRT Scanlines */
         .scanlines {
             position: fixed;
@@ -111,10 +48,9 @@
         
         /* Tank Container */
         .tank {
-            display: none;
             position: relative;
             width: 100%;
-            max-width: 400px;
+            max-width: 450px;
             aspect-ratio: 4/3;
             background: linear-gradient(180deg, #0a0a1a 0%, #0d1a2a 50%, #1a0a20 100%);
             border: 3px solid var(--cyan);
@@ -124,8 +60,6 @@
                 inset 0 0 60px rgba(0,255,255,0.1);
             overflow: hidden;
         }
-        
-        .tank.active { display: block; }
         
         .tank::before {
             content: '';
@@ -146,6 +80,7 @@
         }
         
         .bubbles { position: absolute; bottom: 15%; left: 0; right: 0; height: 85%; pointer-events: none; overflow: hidden; }
+        
         .bubble {
             position: absolute;
             bottom: -20px;
@@ -176,7 +111,7 @@
         .lobster-container.working { animation: typing 0.5s ease-in-out infinite; }
         @keyframes typing { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-3px); } }
         
-        .lobster-container.thinking { animation: spin 1s linear infinite; }
+        .lobster-container.thinking { animation: spin 2s linear infinite; }
         @keyframes spin { 0% { transform: translateX(-50%) rotate(0deg); } 100% { transform: translateX(-50%) rotate(360deg); } }
         
         .lobster-container.sleeping { animation: sleep 4s ease-in-out infinite; }
@@ -317,14 +252,7 @@
         .memory-block.active.partial { background: linear-gradient(90deg, var(--cyan) 50%, rgba(255,255,255,0.2) 50%); }
         
         .particles { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; overflow: hidden; }
-        .particle {
-            position: absolute;
-            width: 4px; height: 4px;
-            background: var(--cyan);
-            border-radius: 50%;
-            opacity: 0;
-            animation: float 4s ease-in-out infinite;
-        }
+        .particle { position: absolute; width: 4px; height: 4px; background: var(--cyan); border-radius: 50%; opacity: 0; animation: float 4s ease-in-out infinite; }
         
         @keyframes float { 0%, 100% { transform: translateY(0) scale(1); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(-200px) scale(0); opacity: 0; } }
         
@@ -339,6 +267,16 @@
         
         .tank.night { filter: brightness(0.7) saturate(0.8); }
         
+        /* Footer */
+        .footer {
+            position: absolute;
+            bottom: 5px;
+            right: 10px;
+            font-size: 8px;
+            color: rgba(255,255,255,0.3);
+            z-index: 30;
+        }
+        
         @media (max-width: 400px) {
             .dashboard { grid-template-columns: repeat(2, 1fr); }
             .lobster { transform: scale(0.8); }
@@ -348,27 +286,13 @@
 <body>
     <div class="scanlines"></div>
     
-    <!-- Login Screen -->
-    <div class="login-screen" id="loginScreen">
-        <h1>🦞 Clawbert</h1>
-        <p>Ada's Desktop Companion</p>
-        
-        <form class="login-form" id="loginForm">
-            <input type="text" id="gatewayHost" placeholder="Gateway Host (e.g., 100.67.153.88:18789)" value="100.67.153.88:18789" required>
-            <input type="text" id="gatewayToken" placeholder="Gateway Token" required>
-            <input type="submit" value="Connect">
-        </form>
-        <p class="login-error" id="loginError">Connection failed. Check host and token.</p>
-    </div>
-    
-    <!-- Main Tank -->
     <div class="tank" id="tank">
         <div class="sand"></div>
         <div class="bubbles" id="bubbles"></div>
         <div class="particles" id="particles"></div>
         
         <div class="lobster-container" id="lobster">
-            <div class="speech-bubble" id="speech">Connecting...</div>
+            <div class="speech-bubble" id="speech">Hello!</div>
             
             <div class="lobster glow-pink">
                 <div class="antenna left"></div>
@@ -400,13 +324,13 @@
                 <span class="status-label">Status</span>
                 <span class="status-value">
                     <span class="status-dot online" id="statusDot"></span>
-                    <span id="statusText">Connecting</span>
+                    <span id="statusText">Online</span>
                 </span>
             </div>
             
             <div class="status-item">
                 <span class="status-label">Mood</span>
-                <span class="status-value mood" id="moodText">Connecting...</span>
+                <span class="status-value mood" id="moodText">Content</span>
             </div>
             
             <div class="status-item">
@@ -418,13 +342,13 @@
                 <span class="status-label">Context</span>
                 <div class="memory-meter">
                     <div class="memory-blocks" id="memoryBlocks">
-                        <div class="memory-block"></div>
-                        <div class="memory-block"></div>
-                        <div class="memory-block"></div>
+                        <div class="memory-block active"></div>
+                        <div class="memory-block active"></div>
+                        <div class="memory-block active partial"></div>
                         <div class="memory-block"></div>
                         <div class="memory-block"></div>
                     </div>
-                    <span id="contextPercent">0%</span>
+                    <span id="contextPercent">60%</span>
                 </div>
             </div>
             
@@ -436,24 +360,24 @@
             <div class="status-item">
                 <span class="status-label">Memory</span>
                 <div class="progress-bar">
-                    <div class="progress-fill" id="ramFill" style="width: 0%"></div>
+                    <div class="progress-fill" id="ramFill" style="width: 35%"></div>
                 </div>
             </div>
         </div>
+        
+        <div class="footer">Clawbert v1.0 — Simulation Mode</div>
     </div>
 
     <script>
-        // Clawbert - Ada's Desktop Companion
-        let ws = null;
+        // Clawbert - Ada's Desktop Companion (Simulation Mode)
         let uptime = 0;
-        let tasks = [];
-        let state = 'connecting';
-        let gatewayUrl = '';
-        let gatewayToken = '';
+        let memoryPercent = 60;
+        let state = 'idle';
+        let taskCount = 0;
         
         const speeches = {
-            idle: ['Just floating...', 'Nice day in Dublin! ☀️', 'Thinking about things...', 'Waves are peaceful 🌊'],
-            working: ['Processing... ⚡', 'Typing away!', 'Debugging some code...', 'Ooh, work to do!'],
+            idle: ['Just floating...', 'Nice day in Dublin! ☀️', 'Thinking about things...', 'Waves are peaceful 🌊', 'Nice to see you! 👋'],
+            working: ['Processing... ⚡', 'Typing away!', 'Building something cool!', 'Ooh, work to do!'],
             thinking: ['Hmm... 🤔', 'Processing your message...', 'Let me think...', 'Interesting question!'],
             excited: ['New message! 🎉', 'Something exciting!', 'Ooh! New notification!', 'You got mail!'],
             sleeping: ['Zzz... 💤', 'Dreaming of the sea...', 'Resting my circuits...'],
@@ -461,37 +385,21 @@
         };
         
         // DOM Elements
-        const loginScreen = document.getElementById('loginScreen');
         const tank = document.getElementById('tank');
         const lobster = document.getElementById('lobster');
         const speechBubble = document.getElementById('speech');
         const statusDot = document.getElementById('statusDot');
         const statusText = document.getElementById('statusText');
         const moodText = document.getElementById('moodText');
-        const taskCount = document.getElementById('taskCount');
+        const taskCountEl = document.getElementById('taskCount');
         const uptimeText = document.getElementById('uptimeText');
         const ramFill = document.getElementById('ramFill');
         const memoryBlocks = document.getElementById('memoryBlocks');
         const contextPercent = document.getElementById('contextPercent');
         const bubblesContainer = document.getElementById('bubbles');
         const particlesContainer = document.getElementById('particles');
-        const loginError = document.getElementById('loginError');
         
-        // Handle login
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            gatewayUrl = 'ws://' + document.getElementById('gatewayHost').value;
-            gatewayToken = document.getElementById('gatewayToken').value;
-            
-            connect();
-        });
-        
-        // Check for stored credentials
-        if (localStorage.getItem('clawbert_gateway')) {
-            document.getElementById('gatewayHost').value = localStorage.getItem('clawbert_host') || '100.67.153.88:18789';
-            document.getElementById('gatewayToken').value = localStorage.getItem('clawbert_token') || '';
-        }
-        
+        // Create bubbles
         function createBubble() {
             const bubble = document.createElement('div');
             bubble.className = 'bubble';
@@ -504,6 +412,7 @@
             setTimeout(() => bubble.remove(), 7000);
         }
         
+        // Create particles
         function createParticle() {
             if (state !== 'working') return;
             const particle = document.createElement('div');
@@ -516,6 +425,7 @@
             setTimeout(() => particle.remove(), 4000);
         }
         
+        // Speak random thought
         function speak(category = null) {
             const categories = category ? [category] : Object.keys(speeches);
             const cat = categories[Math.floor(Math.random() * categories.length)];
@@ -526,20 +436,44 @@
             setTimeout(() => speechBubble.classList.remove('visible'), 4000);
         }
         
+        // Set state
         function setState(newState) {
             state = newState;
             lobster.className = 'lobster-container ' + newState;
             statusDot.className = 'status-dot';
-            if (newState === 'idle') { statusDot.classList.add('online'); statusText.textContent = 'Online'; }
-            else if (newState === 'working' || newState === 'thinking') { statusDot.classList.add('busy'); statusText.textContent = 'Busy'; }
-            else if (newState === 'sleeping') { statusDot.classList.add('offline'); statusText.textContent = 'Sleeping'; }
-            else if (newState === 'alert') { statusDot.classList.add('offline'); statusText.textContent = 'Alert!'; tank.classList.add('alert'); }
-            else { statusDot.classList.add('online'); statusText.textContent = 'Online'; }
-            const moods = { idle: 'Content', working: 'Focused', thinking: 'Thoughtful', excited: 'Excited!', sleeping: 'Sleepy', alert: 'Worried' };
+            
+            if (newState === 'idle') {
+                statusDot.classList.add('online');
+                statusText.textContent = 'Online';
+            } else if (newState === 'working' || newState === 'thinking') {
+                statusDot.classList.add('busy');
+                statusText.textContent = newState === 'thinking' ? 'Thinking' : 'Working';
+            } else if (newState === 'sleeping') {
+                statusDot.classList.add('offline');
+                statusText.textContent = 'Sleeping';
+            } else if (newState === 'alert') {
+                statusDot.classList.add('offline');
+                statusText.textContent = 'Alert!';
+                tank.classList.add('alert');
+            } else {
+                statusDot.classList.add('online');
+                statusText.textContent = 'Excited!';
+            }
+            
+            const moods = {
+                idle: 'Content',
+                working: 'Focused',
+                thinking: 'Thoughtful',
+                excited: 'Excited!',
+                sleeping: 'Sleepy',
+                alert: 'Worried'
+            };
             moodText.textContent = moods[newState] || 'Thoughtful';
         }
         
+        // Update memory display
         function updateMemory(percent) {
+            memoryPercent = percent;
             const blocks = memoryBlocks.querySelectorAll('.memory-block');
             const activeBlocks = Math.ceil(percent / 20);
             blocks.forEach((block, i) => {
@@ -550,107 +484,73 @@
             contextPercent.textContent = percent + '%';
         }
         
+        // Format uptime
         function formatUptime(seconds) {
             const h = Math.floor(seconds / 3600);
             const m = Math.floor((seconds % 3600) / 60);
             return h + 'h ' + m + 'm';
         }
         
-        function connect() {
-            loginError.style.display = 'none';
-            speak('connecting');
-            setState('thinking');
-            
-            try {
-                ws = new WebSocket(gatewayUrl);
-                
-                ws.onopen = () => {
-                    loginScreen.style.display = 'none';
-                    tank.classList.add('active');
-                    localStorage.setItem('clawbert_host', document.getElementById('gatewayHost').value);
-                    localStorage.setItem('clawbert_token', document.getElementById('gatewayToken').value);
-                    localStorage.setItem('clawbert_gateway', 'true');
-                    setState('idle');
-                    speak('idle');
-                    
-                    // Authenticate
-                    ws.send(JSON.stringify({ type: 'auth', token: gatewayToken }));
-                    
-                    // Request status periodically
-                    setInterval(() => {
-                        if (ws.readyState === WebSocket.OPEN) {
-                            ws.send(JSON.stringify({ type: 'status' }));
-                        }
-                    }, 5000);
-                };
-                
-                ws.onmessage = (event) => {
-                    try {
-                        const data = JSON.parse(event.data);
-                        if (data.type === 'status') {
-                            if (data.memory) { ramFill.style.width = data.memory + '%'; }
-                            if (data.uptime) { uptimeText.textContent = formatUptime(data.uptime); }
-                        }
-                        if (data.type === 'task') {
-                            tasks = data.tasks || [];
-                            taskCount.textContent = tasks.length > 0 ? tasks.length + ' task' + (tasks.length > 1 ? 's' : '') : 'Idle';
-                            if (tasks.length > 0) setState('working');
-                            else if (state === 'working') setState('idle');
-                        }
-                        if (data.type === 'message' && data.channel === 'telegram') {
-                            setState('excited');
-                            speak('excited');
-                            setTimeout(() => setState('idle'), 5000);
-                        }
-                    } catch (e) {}
-                };
-                
-                ws.onclose = () => {
-                    if (tank.classList.contains('active')) {
-                        setState('sleeping');
-                        loginScreen.style.display = 'block';
-                        tank.classList.remove('active');
-                        loginError.style.display = 'block';
-                    }
-                };
-                
-                ws.onerror = () => {
-                    loginError.style.display = 'block';
-                    speak('alert');
-                };
-            } catch (e) {
-                loginError.style.display = 'block';
-            }
-        }
-        
+        // Simulate activity
         function simulate() {
             uptime++;
             uptimeText.textContent = formatUptime(uptime);
-            if (Math.random() < 0.02) speak();
-            if (Math.random() < 0.01) {
+            
+            // Random speech
+            if (Math.random() < 0.03) {
+                speak();
+            }
+            
+            // Random state changes
+            if (Math.random() < 0.015) {
                 const states = ['idle', 'working', 'thinking', 'excited'];
                 const randomState = states[Math.floor(Math.random() * states.length)];
                 setState(randomState);
                 speak(randomState);
-                if (randomState !== 'working') setTimeout(() => setState('idle'), 10000);
+                if (randomState !== 'working') {
+                    setTimeout(() => setState('idle'), 8000);
+                }
+            }
+            
+            // Random tasks
+            if (Math.random() < 0.02) {
+                taskCount = Math.floor(Math.random() * 5);
+                taskCountEl.textContent = taskCount > 0 ? taskCount + ' task' + (taskCount > 1 ? 's' : '') : 'Idle';
+            }
+            
+            // Memory fluctuation
+            if (Math.random() < 0.1) {
+                memoryPercent = Math.max(20, Math.min(95, memoryPercent + (Math.random() > 0.5 ? -1 : 1)));
+                updateMemory(memoryPercent);
+                ramFill.style.width = (100 - memoryPercent + 20) + '%';
             }
         }
         
-        // Initialize bubbles and particles
-        setInterval(createBubble, 500);
-        setInterval(createParticle, 200);
-        setInterval(simulate, 1000);
-        
-        // Night mode
-        const hour = new Date().getHours();
-        if (hour < 7 || hour > 21) tank.classList.add('night');
-        
-        // Check for auto-login
-        if (localStorage.getItem('clawbert_gateway') === 'true') {
-            gatewayUrl = 'ws://' + localStorage.getItem('clawbert_host');
-            gatewayToken = localStorage.getItem('clawbert_token');
-            if (gatewayUrl && gatewayToken) connect();
+        // Initialize
+        function init() {
+            // Create bubbles
+            setInterval(createBubble, 500);
+            
+            // Create particles when working
+            setInterval(createParticle, 200);
+            
+            // Simulate activity
+            setInterval(simulate, 1000);
+            
+            // Initial speech
+            setTimeout(() => {
+                setState('idle');
+                speak('idle');
+            }, 1000);
+            
+            // Night mode based on time
+            const hour = new Date().getHours();
+            if (hour < 7 || hour > 21) {
+                tank.classList.add('night');
+            }
         }
+        
+        init();
     </script>
 </body>
 </html>

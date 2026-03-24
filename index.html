@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clawbert — Ada's Desktop Companion</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --pink: #ff6b9d;
+            --cyan: #00ffff;
+            --purple: #b08d57;
+            --dark: #0a0a0f;
+            --glass: rgba(255,255,255,0.05);
+            --glass-border: rgba(255,255,255,0.1);
+        }
+        
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--dark);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            color: #fff;
+        }
+        
+        /* CRT Scanlines */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0,0,0,0.15) 0px,
+                rgba(0,0,0,0.15) 1px,
+                transparent 1px,
+                transparent 3px
+            );
+            opacity: 0.3;
+        }
+        
+        /* Tank Container */
+        .tank {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            aspect-ratio: 4/3;
+            background: linear-gradient(180deg, #0a0a1a 0%, #0d1a2a 50%, #1a0a20 100%);
+            border: 3px solid var(--cyan);
+            border-radius: 12px;
+            box-shadow: 
+                0 0 30px rgba(0,255,255,0.3),
+                inset 0 0 60px rgba(0,255,255,0.1),
+                inset 0 -20px 40px rgba(176,141,87,0.1);
+            overflow: hidden;
+        }
+        
+        /* Glass Reflection */
+        .tank::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 100%);
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        /* Sand Floor */
+        .sand {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 15%;
+            background: linear-gradient(180deg, #1a1a2e 0%, #0d0d1a 100%);
+            border-top: 2px solid rgba(176,141,87,0.3);
+        }
+        
+        .sand::before {
+            content: '~ ~ ~ ~ ~ ~ ~ ~ ~ ~';
+            position: absolute;
+            top: 5px;
+            left: 10%;
+            color: rgba(176,141,87,0.2);
+            font-size: 8px;
+            letter-spacing: 4px;
+        }
+        
+        /* Bubbles */
+        .bubbles {
+            position: absolute;
+            bottom: 15%;
+            left: 0;
+            right: 0;
+            height: 85%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .bubble {
+            position: absolute;
+            bottom: -20px;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), rgba(0,255,255,0.1));
+            border-radius: 50%;
+            animation: rise linear infinite;
+        }
+        
+        @keyframes rise {
+            0% { transform: translateY(0) scale(1); opacity: 0.8; }
+            100% { transform: translateY(-400px) scale(0.5); opacity: 0; }
+        }
+        
+        /* Lobster Container */
+        .lobster-container {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: swim 3s ease-in-out infinite;
+        }
+        
+        @keyframes swim {
+            0%, 100% { transform: translateX(-50%) translateY(0) rotate(0deg); }
+            25% { transform: translateX(-50%) translateY(-10px) rotate(-2deg); }
+            75% { transform: translateX(-50%) translateY(5px) rotate(2deg); }
+        }
+        
+        .lobster-container.working {
+            animation: typing 0.5s ease-in-out infinite;
+        }
+        
+        @keyframes typing {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-3px); }
+        }
+        
+        .lobster-container.thinking {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: translateX(-50%) rotate(0deg); }
+            100% { transform: translateX(-50%) rotate(360deg); }
+        }
+        
+        .lobster-container.sleeping {
+            animation: sleep 4s ease-in-out infinite;
+        }
+        
+        @keyframes sleep {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(0.95) translateY(5px); }
+        }
+        
+        .lobster-container.excited {
+            animation: bounce 0.3s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0) scale(1); }
+            50% { transform: translateX(-50%) translateY(-20px) scale(1.1); }
+        }
+        
+        /* Pixel Lobster */
+        .lobster {
+            width: 120px;
+            height: 80px;
+            position: relative;
+            image-rendering: pixelated;
+        }
+        
+        .lobster-body {
+            position: absolute;
+            width: 60px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--pink) 0%, #ff4477 50%, #cc3366 100%);
+            border-radius: 50% 50% 40% 40%;
+            left: 30px;
+            top: 15px;
+            box-shadow: 
+                inset -10px -10px 20px rgba(0,0,0,0.3),
+                inset 5px 5px 15px rgba(255,255,255,0.2),
+                0 0 20px rgba(255,107,157,0.5);
+        }
+        
+        /* Eyes */
+        .eye {
+            position: absolute;
+            width: 14px;
+            height: 16px;
+            background: #fff;
+            border-radius: 50%;
+            top: 20px;
+            box-shadow: inset 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .eye.left { left: 35px; }
+        .eye.right { left: 71px; }
+        
+        .pupil {
+            position: absolute;
+            width: 6px;
+            height: 8px;
+            background: #111;
+            border-radius: 50%;
+            top: 5px;
+            left: 4px;
+            transition: transform 0.1s;
+        }
+        
+        .lobster-container:hover .pupil {
+            transform: translateX(2px);
+        }
+        
+        /* Antennae */
+        .antenna {
+            position: absolute;
+            width: 3px;
+            height: 30px;
+            background: linear-gradient(180deg, var(--pink), var(--purple));
+            border-radius: 3px;
+            top: 0;
+        }
+        
+        .antenna.left { left: 45px; transform: rotate(-20deg); }
+        .antenna.right { left: 72px; transform: rotate(20deg); }
+        
+        .antenna::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--cyan);
+            border-radius: 50%;
+            top: -4px;
+            left: -2.5px;
+            box-shadow: 0 0 10px var(--cyan);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 10px var(--cyan); }
+            50% { opacity: 0.5; box-shadow: 0 0 5px var(--cyan); }
+        }
+        
+        /* Claws */
+        .claw {
+            position: absolute;
+            width: 35px;
+            height: 40px;
+            top: 25px;
+        }
+        
+        .claw.left { left: 0; transform: rotate(-30deg); }
+        .claw.right { right: 0; transform: rotate(30deg) scaleX(-1); }
+        
+        .claw-arm {
+            position: absolute;
+            width: 15px;
+            height: 25px;
+            background: linear-gradient(90deg, var(--pink), #ff4477);
+            border-radius: 5px;
+            top: 10px;
+            left: 10px;
+        }
+        
+        .claw-pincer {
+            position: absolute;
+            width: 25px;
+            height: 20px;
+            background: linear-gradient(135deg, var(--pink), #ff4477);
+            border-radius: 0 50% 50% 0;
+            top: 0;
+            box-shadow: 0 0 15px rgba(255,107,157,0.4);
+        }
+        
+        .claw-pincer::before {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 3px;
+            background: var(--cyan);
+            top: 8px;
+            left: 3px;
+            border-radius: 2px;
+            box-shadow: 0 0 8px var(--cyan);
+        }
+        
+        /* Tail */
+        .tail {
+            position: absolute;
+            bottom: -5px;
+            left: 45px;
+            width: 30px;
+            height: 25px;
+            display: flex;
+            gap: 3px;
+        }
+        
+        .tail-segment {
+            width: 8px;
+            height: 100%;
+            background: linear-gradient(180deg, #ff4477, #cc3366);
+            border-radius: 0 0 50% 50%;
+        }
+        
+        .tail-segment:nth-child(2) { transform: scale(0.9); }
+        .tail-segment:nth-child(3) { transform: scale(0.8); }
+        .tail-segment:nth-child(4) { transform: scale(0.7); }
+        
+        /* Legs */
+        .legs {
+            position: absolute;
+            bottom: -8px;
+            left: 35px;
+            width: 50px;
+            height: 15px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .leg {
+            width: 3px;
+            height: 15px;
+            background: var(--pink);
+            border-radius: 2px;
+            transform-origin: top;
+            animation: kick 0.5s ease-in-out infinite alternate;
+        }
+        
+        .leg:nth-child(1) { animation-delay: 0s; }
+        .leg:nth-child(2) { animation-delay: 0.1s; }
+        .leg:nth-child(3) { animation-delay: 0.2s; }
+        .leg:nth-child(4) { animation-delay: 0.3s; }
+        
+        @keyframes kick {
+            0% { transform: rotate(-10deg); }
+            100% { transform: rotate(10deg); }
+        }
+        
+        /* Speech Bubble */
+        .speech-bubble {
+            position: absolute;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 8px 14px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+            backdrop-filter: blur(10px);
+            max-width: 200px;
+            white-space: normal;
+            text-align: center;
+        }
+        
+        .speech-bubble.visible {
+            opacity: 1;
+        }
+        
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: var(--glass-border);
+        }
+        
+        /* Status Dashboard */
+        .dashboard {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 12px;
+            backdrop-filter: blur(10px);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            font-size: 10px;
+            z-index: 20;
+        }
+        
+        .status-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .status-label {
+            color: rgba(255,255,255,0.5);
+            font-size: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .status-value {
+            color: var(--cyan);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: blink 2s ease-in-out infinite;
+        }
+        
+        .status-dot.online { background: #00ff00; box-shadow: 0 0 10px #00ff00; }
+        .status-dot.busy { background: #ffff00; box-shadow: 0 0 10px #ffff00; }
+        .status-dot.offline { background: #ff0000; box-shadow: 0 0 10px #ff0000; }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .mood {
+            color: var(--pink);
+            font-size: 11px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--cyan), var(--pink));
+            border-radius: 3px;
+            transition: width 0.5s;
+        }
+        
+        /* Memory Indicator */
+        .memory-meter {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .memory-blocks {
+            display: flex;
+            gap: 2px;
+        }
+        
+        .memory-block {
+            width: 6px;
+            height: 12px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+        }
+        
+        .memory-block.active {
+            background: var(--cyan);
+            box-shadow: 0 0 5px var(--cyan);
+        }
+        
+        .memory-block.active.partial {
+            background: linear-gradient(90deg, var(--cyan) 50%, rgba(255,255,255,0.2) 50%);
+        }
+        
+        /* Data Particles */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--cyan);
+            border-radius: 50%;
+            opacity: 0;
+            animation: float 4s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-200px) scale(0); opacity: 0; }
+        }
+        
+        /* Glow Effects */
+        .glow-pink {
+            filter: drop-shadow(0 0 10px var(--pink));
+        }
+        
+        .glow-cyan {
+            filter: drop-shadow(0 0 10px var(--cyan));
+        }
+        
+        /* Responsive */
+        @media (max-width: 400px) {
+            .tank {
+                border-radius: 8px;
+            }
+            
+            .dashboard {
+                grid-template-columns: repeat(2, 1fr);
+                font-size: 9px;
+            }
+            
+            .lobster {
+                transform: scale(0.8);
+            }
+        }
+        
+        /* Night Mode */
+        .tank.night {
+            filter: brightness(0.7) saturate(0.8);
+        }
+        
+        .tank.night .sand {
+            background: linear-gradient(180deg, #0a0a15 0%, #050510 100%);
+        }
+        
+        /* Alert State */
+        .tank.alert {
+            animation: alert-pulse 0.5s ease-in-out infinite;
+        }
+        
+        @keyframes alert-pulse {
+            0%, 100% { box-shadow: 0 0 30px rgba(255,0,0,0.5); }
+            50% { box-shadow: 0 0 60px rgba(255,0,0,0.8); }
+        }
+        
+        /* Zzz for sleeping */
+        .zzz {
+            position: absolute;
+            top: -20px;
+            right: -10px;
+            font-size: 14px;
+            color: var(--cyan);
+            opacity: 0;
+            animation: zzz 2s ease-in-out infinite;
+        }
+        
+        .lobster-container.sleeping .zzz {
+            opacity: 1;
+        }
+        
+        @keyframes zzz {
+            0%, 100% { transform: translateY(0) rotate(-10deg); opacity: 0.5; }
+            50% { transform: translateY(-10px) rotate(10deg); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="scanlines"></div>
+    
+    <div class="tank" id="tank">
+        <div class="sand"></div>
+        
+        <div class="bubbles" id="bubbles"></div>
+        <div class="particles" id="particles"></div>
+        
+        <div class="lobster-container" id="lobster">
+            <div class="speech-bubble" id="speech">Hmm, interesting...</div>
+            
+            <div class="lobster glow-pink">
+                <div class="antenna left"></div>
+                <div class="antenna right"></div>
+                
+                <div class="eye left"><div class="pupil"></div></div>
+                <div class="eye right"><div class="pupil"></div></div>
+                
+                <div class="lobster-body"></div>
+                
+                <div class="claw left">
+                    <div class="claw-arm"></div>
+                    <div class="claw-pincer"></div>
+                </div>
+                <div class="claw right">
+                    <div class="claw-arm"></div>
+                    <div class="claw-pincer"></div>
+                </div>
+                
+                <div class="tail">
+                    <div class="tail-segment"></div>
+                    <div class="tail-segment"></div>
+                    <div class="tail-segment"></div>
+                    <div class="tail-segment"></div>
+                </div>
+                
+                <div class="legs">
+                    <div class="leg"></div>
+                    <div class="leg"></div>
+                    <div class="leg"></div>
+                    <div class="leg"></div>
+                </div>
+            </div>
+            
+            <div class="zzz">Z z z</div>
+        </div>
+        
+        <div class="dashboard">
+            <div class="status-item">
+                <span class="status-label">Status</span>
+                <span class="status-value">
+                    <span class="status-dot online" id="statusDot"></span>
+                    <span id="statusText">Online</span>
+                </span>
+            </div>
+            
+            <div class="status-item">
+                <span class="status-label">Mood</span>
+                <span class="status-value mood" id="moodText">Thoughtful</span>
+            </div>
+            
+            <div class="status-item">
+                <span class="status-label">Tasks</span>
+                <span class="status-value" id="taskCount">0 processing</span>
+            </div>
+            
+            <div class="status-item">
+                <span class="status-label">Context</span>
+                <div class="memory-meter">
+                    <div class="memory-blocks" id="memoryBlocks">
+                        <div class="memory-block active"></div>
+                        <div class="memory-block active"></div>
+                        <div class="memory-block active partial"></div>
+                        <div class="memory-block"></div>
+                        <div class="memory-block"></div>
+                    </div>
+                    <span id="contextPercent">60%</span>
+                </div>
+            </div>
+            
+            <div class="status-item">
+                <span class="status-label">Uptime</span>
+                <span class="status-value" id="uptimeText">0h 0m</span>
+            </div>
+            
+            <div class="status-item">
+                <span class="status-label">Memory</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="ramFill" style="width: 35%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Clawbert - Ada's Desktop Companion
+        // Connects to OpenClaw gateway for real-time status
+        
+        const GATEWAY_URL = 'ws://localhost:18789';
+        const GATEWAY_TOKEN = '6f8e5d5f99154d8c43e34c501c2cc3a6f1b6a4e095896556';
+        
+        let ws = null;
+        let uptime = 0;
+        let tasks = [];
+        let mood = 'Thoughtful';
+        let memoryPercent = 60;
+        let state = 'idle';
+        
+        // Speech bubbles
+        const speeches = {
+            idle: ['Just floating...', 'Nice day in Dublin! ☀️', 'Thinking about things...', 'Waves are peaceful 🌊'],
+            working: ['Processing... ⚡', 'Typing away!', 'Debugging some code...', 'Ooh, work to do!'],
+            thinking: ['Hmm... 🤔', 'Processing your message...', 'Let me think...', 'Interesting question!'],
+            excited: ['New message! 🎉', 'Something exciting!', 'Ooh! New notification!', 'You got mail!'],
+            sleeping: ['Zzz... 💤', 'Dreaming of the sea...', 'Resting my circuits...'],
+            alert: ['System issue! ⚠️', 'Something went wrong...', 'Need attention!']
+        };
+        
+        // DOM Elements
+        const tank = document.getElementById('tank');
+        const lobster = document.getElementById('lobster');
+        const speechBubble = document.getElementById('speech');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const moodText = document.getElementById('moodText');
+        const taskCount = document.getElementById('taskCount');
+        const uptimeText = document.getElementById('uptimeText');
+        const ramFill = document.getElementById('ramFill');
+        const memoryBlocks = document.getElementById('memoryBlocks');
+        const contextPercent = document.getElementById('contextPercent');
+        const bubblesContainer = document.getElementById('bubbles');
+        const particlesContainer = document.getElementById('particles');
+        
+        // Create bubbles
+        function createBubble() {
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            const size = Math.random() * 10 + 5;
+            bubble.style.width = size + 'px';
+            bubble.style.height = size + 'px';
+            bubble.style.left = Math.random() * 100 + '%';
+            bubble.style.animationDuration = (Math.random() * 3 + 4) + 's';
+            bubblesContainer.appendChild(bubble);
+            
+            setTimeout(() => bubble.remove(), 7000);
+        }
+        
+        // Create data particles
+        function createParticle() {
+            if (state !== 'working') return;
+            
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.bottom = '20%';
+            particle.style.animationDuration = (Math.random() * 2 + 2) + 's';
+            particle.style.background = Math.random() > 0.5 ? 'var(--cyan)' : 'var(--pink)';
+            particlesContainer.appendChild(particle);
+            
+            setTimeout(() => particle.remove(), 4000);
+        }
+        
+        // Speak random thought
+        function speak(category = null) {
+            const categories = category ? [category] : Object.keys(speeches);
+            const cat = categories[Math.floor(Math.random() * categories.length)];
+            const thoughts = speeches[cat];
+            const thought = thoughts[Math.floor(Math.random() * thoughts.length)];
+            
+            speechBubble.textContent = thought;
+            speechBubble.classList.add('visible');
+            
+            setTimeout(() => {
+                speechBubble.classList.remove('visible');
+            }, 4000);
+        }
+        
+        // Update lobster state
+        function setState(newState) {
+            state = newState;
+            lobster.className = 'lobster-container ' + newState;
+            
+            // Update status dot
+            statusDot.className = 'status-dot';
+            if (newState === 'idle') {
+                statusDot.classList.add('online');
+                statusText.textContent = 'Online';
+            } else if (newState === 'working' || newState === 'thinking') {
+                statusDot.classList.add('busy');
+                statusText.textContent = 'Busy';
+            } else if (newState === 'sleeping') {
+                statusDot.classList.add('offline');
+                statusText.textContent = 'Sleeping';
+            } else if (newState === 'alert') {
+                statusDot.classList.add('offline');
+                statusText.textContent = 'Alert!';
+                tank.classList.add('alert');
+            } else {
+                statusDot.classList.add('online');
+                statusText.textContent = 'Online';
+            }
+            
+            // Update mood
+            const moods = {
+                idle: 'Content',
+                working: 'Focused',
+                thinking: 'Thoughtful',
+                excited: 'Excited!',
+                sleeping: 'Sleepy',
+                alert: 'Worried'
+            };
+            moodText.textContent = moods[newState] || 'Thoughtful';
+        }
+        
+        // Update memory display
+        function updateMemory(percent) {
+            memoryPercent = percent;
+            const blocks = memoryBlocks.querySelectorAll('.memory-block');
+            const activeBlocks = Math.ceil(percent / 20);
+            
+            blocks.forEach((block, i) => {
+                block.className = 'memory-block';
+                if (i < activeBlocks - 1) {
+                    block.classList.add('active');
+                } else if (i === activeBlocks - 1 && percent % 20 > 10) {
+                    block.classList.add('active', 'partial');
+                }
+            });
+            
+            contextPercent.textContent = percent + '%';
+        }
+        
+        // Format uptime
+        function formatUptime(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            return h + 'h ' + m + 'm';
+        }
+        
+        // WebSocket connection
+        function connect() {
+            try {
+                ws = new WebSocket(GATEWAY_URL);
+                
+                ws.onopen = () => {
+                    console.log('Connected to Clawbert gateway');
+                    setState('idle');
+                    
+                    // Authenticate
+                    ws.send(JSON.stringify({
+                        type: 'auth',
+                        token: GATEWAY_TOKEN
+                    }));
+                    
+                    // Request status
+                    setInterval(() => {
+                        if (ws.readyState === WebSocket.OPEN) {
+                            ws.send(JSON.stringify({ type: 'status' }));
+                        }
+                    }, 5000);
+                };
+                
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        
+                        // Handle different message types
+                        if (data.type === 'status') {
+                            // Update system stats
+                            if (data.memory) {
+                                ramFill.style.width = data.memory + '%';
+                            }
+                            if (data.uptime) {
+                                uptimeText.textContent = formatUptime(data.uptime);
+                            }
+                        }
+                        
+                        // Handle task updates
+                        if (data.type === 'task') {
+                            tasks = data.tasks || [];
+                            taskCount.textContent = tasks.length > 0 
+                                ? tasks.length + ' task' + (tasks.length > 1 ? 's' : '')
+                                : 'Idle';
+                            
+                            if (tasks.length > 0) {
+                                setState('working');
+                            } else {
+                                setState('idle');
+                            }
+                        }
+                        
+                        // Handle message events
+                        if (data.type === 'message' && data.channel === 'telegram') {
+                            setState('excited');
+                            speak('excited');
+                            setTimeout(() => setState('idle'), 5000);
+                        }
+                    } catch (e) {
+                        // Ignore parse errors
+                    }
+                };
+                
+                ws.onclose = () => {
+                    setState('sleeping');
+                    setTimeout(connect, 5000);
+                };
+                
+                ws.onerror = () => {
+                    setState('alert');
+                };
+            } catch (e) {
+                setState('sleeping');
+            }
+        }
+        
+        // Simulate activity (when not connected to real gateway)
+        function simulate() {
+            uptime++;
+            uptimeText.textContent = formatUptime(uptime);
+            
+            // Random state changes
+            if (Math.random() < 0.02) {
+                speak();
+            }
+            
+            if (Math.random() < 0.01) {
+                const states = ['idle', 'working', 'thinking', 'excited'];
+                const randomState = states[Math.floor(Math.random() * states.length)];
+                setState(randomState);
+                speak(randomState);
+                
+                if (randomState !== 'working') {
+                    setTimeout(() => setState('idle'), 10000);
+                }
+            }
+            
+            // Memory decay
+            if (Math.random() < 0.1) {
+                memoryPercent = Math.max(20, memoryPercent - 1);
+                updateMemory(memoryPercent);
+            }
+        }
+        
+        // Initialize
+        function init() {
+            // Create bubbles periodically
+            setInterval(createBubble, 500);
+            
+            // Create particles when working
+            setInterval(createParticle, 200);
+            
+            // Simulate activity
+            setInterval(simulate, 1000);
+            
+            // Try to connect to real gateway
+            connect();
+            
+            // Fallback simulation
+            setTimeout(() => {
+                if (state === 'sleeping') {
+                    setState('idle');
+                    speak('idle');
+                }
+            }, 3000);
+            
+            // Night mode based on time
+            const hour = new Date().getHours();
+            if (hour < 7 || hour > 21) {
+                tank.classList.add('night');
+            }
+            
+            // Initial speech
+            setTimeout(() => {
+                speak('idle');
+            }, 2000);
+        }
+        
+        // Start
+        init();
+    </script>
+</body>
+</html>
